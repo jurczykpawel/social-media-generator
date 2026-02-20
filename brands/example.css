@@ -1,0 +1,63 @@
+/*
+ * Example Brand — demo configuration
+ * Use this to test the tool after cloning. Replace with your own brand.
+ * Dark theme with teal accent and orange CTA.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    /* Identity */
+    --brand-name: "your.brand";
+    --brand-tagline: "// your.brand";
+
+    /* Backgrounds */
+    --brand-bg-primary: #0F1117;
+    --brand-bg-secondary: #151720;
+    --brand-bg-surface: #1C1E2A;
+    --brand-bg-card: #191B25;
+
+    /* Accent (Teal) */
+    --brand-accent: #2DD4BF;
+    --brand-accent-hover: #5EEAD4;
+    --brand-accent-dim: rgba(45, 212, 191, 0.10);
+
+    /* CTA (Orange) */
+    --brand-cta: #F97316;
+    --brand-cta-hover: #FB923C;
+    --brand-cta-text: #0F1117;
+
+    /* Text */
+    --brand-text-primary: #F1F5F9;
+    --brand-text-secondary: #94A3B8;
+    --brand-text-muted: #64748B;
+
+    /* Borders & Shadows */
+    --brand-border: rgba(255, 255, 255, 0.06);
+    --brand-border-accent: rgba(45, 212, 191, 0.15);
+    --brand-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+    --brand-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.2);
+
+    /* Semantic */
+    --brand-success: #34D399;
+    --brand-error: #EF4444;
+
+    /* Typography */
+    --brand-font-heading: 'Space Grotesk', system-ui, sans-serif;
+    --brand-font-body: 'Inter', system-ui, sans-serif;
+    --brand-font-mono: 'JetBrains Mono', monospace;
+    --brand-heading-weight: 700;
+    --brand-heading-weight-heavy: 700;
+
+    /* Radius */
+    --brand-radius-sm: 6px;
+    --brand-radius-md: 10px;
+    --brand-radius-lg: 16px;
+
+    /* Theme */
+    --brand-theme: dark;
+
+    /* Badge backgrounds */
+    --brand-badge-accent-bg: #132624;
+    --brand-badge-cta-bg: #231910;
+    --brand-badge-success-bg: #111E18;
+}

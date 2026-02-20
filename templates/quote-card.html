@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Quote Card</title>
+<!--
+  Quote Card Template
+  Params: ?brand=BRAND&text=QUOTE&attr=AUTHOR&num=001
+  Optional: &bg=/path/to/image.jpg &bg_opacity=0.65
+-->
+<link rel="stylesheet" href="_base.css">
+<link id="brand-css" rel="stylesheet" href="">
+<style>
+  /* Decorative gradient glow */
+  .glow {
+    position: absolute;
+    width: 55vw;
+    height: 55vw;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
+    background: radial-gradient(circle, var(--brand-accent-dim) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  /* Series number */
+  .series-num {
+    position: absolute;
+    top: var(--safe-top);
+    right: var(--safe-right);
+    font-family: var(--brand-font-mono);
+    font-size: 2vw;
+    color: var(--brand-accent);
+    opacity: 0.7;
+    letter-spacing: 0.05em;
+    z-index: 2;
+  }
+
+  /* Main card layout */
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: var(--safe-top) var(--safe-right) calc(var(--safe-bottom) + var(--footer-height)) var(--safe-left);
+  }
+
+  /* Tagline */
+  .tagline {
+    font-family: var(--brand-font-mono);
+    font-size: 1.6vw;
+    color: var(--brand-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 4vh;
+    opacity: 0.8;
+  }
+
+  /* Quote marks */
+  .quote-open {
+    font-family: var(--brand-font-heading);
+    font-size: 10vw;
+    font-weight: var(--brand-heading-weight-heavy);
+    color: var(--brand-accent);
+    line-height: 0.6;
+    margin-bottom: 1vh;
+    opacity: 0.4;
+    text-align: left;
+    width: 100%;
+    max-width: 82vw;
+  }
+
+  .quote-text {
+    font-family: var(--brand-font-heading);
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-text-primary);
+    text-align: center;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    max-width: 82vw;
+  }
+
+  .quote-close {
+    font-family: var(--brand-font-heading);
+    font-size: 10vw;
+    font-weight: var(--brand-heading-weight-heavy);
+    color: var(--brand-accent);
+    opacity: 0.4;
+    text-align: right;
+    line-height: 0.5;
+    margin-top: 1.5vh;
+    width: 100%;
+    max-width: 82vw;
+  }
+
+  /* Divider */
+  .divider {
+    width: 5vw;
+    height: 2px;
+    background: linear-gradient(90deg, var(--brand-accent), var(--brand-cta));
+    margin: 2.5vh auto 0;
+    border-radius: 1px;
+  }
+
+  /* Attribution */
+  .attribution {
+    font-family: var(--brand-font-mono);
+    font-size: 1.8vw;
+    color: var(--brand-text-muted);
+    margin-top: 2.5vh;
+    text-align: center;
+    letter-spacing: 0.03em;
+  }
+
+  /* Footer bar */
+  .footer {
+    position: absolute;
+    bottom: var(--footer-bottom);
+    left: 0;
+    right: 0;
+    height: var(--footer-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2vw;
+    background: var(--brand-accent);
+    z-index: 2;
+  }
+
+  .footer-name {
+    font-family: var(--brand-font-heading);
+    font-size: 2vw;
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-bg-primary);
+    letter-spacing: 0.03em;
+  }
+
+  /* Vertical adjustments */
+  @media (max-aspect-ratio: 3/4) {
+    .tagline { font-size: 2.2vw; margin-bottom: 5vh; }
+    .quote-open, .quote-close { font-size: 12vw; }
+    .attribution { font-size: 2.4vw; }
+    .series-num { font-size: 2.6vw; }
+    .footer-name { font-size: 2.6vw; }
+  }
+
+  /* Horizontal adjustments */
+  @media (min-aspect-ratio: 4/3) {
+    .tagline { font-size: 1.4vw; margin-bottom: 3vh; }
+    .quote-open, .quote-close { font-size: 8vw; }
+    .attribution { font-size: 1.5vw; }
+    .series-num { font-size: 1.6vw; }
+    .footer-name { font-size: 1.8vw; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+<div class="series-num" id="seriesNum"></div>
+
+<div class="card">
+  <div class="tagline" id="tagline"></div>
+  <div class="quote-open">&ldquo;</div>
+  <div class="quote-text" id="quoteText">Quote text here.</div>
+  <div class="quote-close">&rdquo;</div>
+  <div class="divider"></div>
+  <div class="attribution" id="attrText"></div>
+</div>
+
+<div class="footer">
+  <span class="footer-name" id="footerName"></span>
+</div>
+
+<script src="_base.js"></script>
+<script>
+  initTemplate(({ params, styles, brandName }) => {
+    const brandTagline = styles.getPropertyValue('--brand-tagline').trim().replace(/"/g, '');
+
+    document.getElementById('footerName').textContent = brandName;
+    document.getElementById('tagline').textContent = brandTagline;
+
+    const text = params.get('text');
+    const attr = params.get('attr');
+    const num = params.get('num');
+
+    if (text) document.getElementById('quoteText').textContent = text;
+    if (attr) document.getElementById('attrText').textContent = '— ' + attr;
+    if (num) document.getElementById('seriesNum').textContent = '#' + num;
+
+    autoSizeText(document.getElementById('quoteText'), [
+      [40, 5.5], [80, 4.8], [120, 4.2], [180, 3.6], [250, 3.0], [Infinity, 2.6]
+    ], 0.5);
+  });
+</script>
+</body>
+</html>

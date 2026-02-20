@@ -1,0 +1,29 @@
+[
+    {
+        "template": "quote-card",
+        "size": "post",
+        "text": "Ship it before it's perfect. Your users will tell you what to fix.",
+        "attr": "A wise engineer",
+        "num": "001",
+        "output_prefix": "example_quote_001"
+    },
+    {
+        "template": "tip-card",
+        "size": "post",
+        "badge": "PRO TIP",
+        "title": "3 Ways to Automate Without SaaS",
+        "bullets": "Self-host your workflow engine — zero subscriptions|Docker Compose on a $5/mo VPS|Webhooks + cron = free scheduler",
+        "num": "002",
+        "output_prefix": "example_tip_002"
+    },
+    {
+        "template": "ad-card",
+        "size": "all",
+        "badge": "FREE WEBINAR",
+        "title": "Automate your business in a *weekend*",
+        "text": "Step-by-step guide to building your own automation stack.",
+        "cta": "Register now",
+        "urgency": "Only 50 spots",
+        "output_prefix": "example_ad_003"
+    }
+]

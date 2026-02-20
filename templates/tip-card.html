@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Tip Card</title>
+<!--
+  Tip Card Template
+  Params: ?brand=BRAND&badge=TAG&title=TITLE&bullets=A|B|C&num=001
+  Optional: &bg=/path/to/image.jpg &bg_opacity=0.65
+-->
+<link rel="stylesheet" href="_base.css">
+<link id="brand-css" rel="stylesheet" href="">
+<style>
+  /* Accent line top */
+  .accent-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--brand-accent), var(--brand-cta));
+  }
+
+  /* Series number */
+  .series-num {
+    position: absolute;
+    top: var(--safe-top);
+    right: var(--safe-right);
+    font-family: var(--brand-font-mono);
+    font-size: 2vw;
+    color: var(--brand-accent);
+    opacity: 0.7;
+    letter-spacing: 0.05em;
+    z-index: 2;
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--safe-top) var(--safe-right) calc(var(--safe-bottom) + var(--footer-height)) var(--safe-left);
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-block;
+    font-family: var(--brand-font-mono);
+    font-size: 1.4vw;
+    font-weight: 600;
+    color: var(--brand-accent);
+    background: var(--brand-badge-accent-bg);
+    padding: 0.6vh 2vw;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 3vh;
+    align-self: flex-start;
+  }
+
+  /* Title */
+  .title {
+    font-family: var(--brand-font-heading);
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-text-primary);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 4vh;
+  }
+
+  /* Bullets */
+  .bullets {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5vh;
+  }
+
+  .bullet {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5vw;
+    font-family: var(--brand-font-body);
+    color: var(--brand-text-secondary);
+    line-height: 1.5;
+  }
+
+  .bullet-icon {
+    flex-shrink: 0;
+    width: 2.5vw;
+    height: 2.5vw;
+    margin-top: 0.3vh;
+    border-radius: 50%;
+    background: var(--brand-accent-dim);
+    border: 2px solid var(--brand-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bullet-icon::after {
+    content: '';
+    width: 0.8vw;
+    height: 0.8vw;
+    border-radius: 50%;
+    background: var(--brand-accent);
+  }
+
+  .bullet-text {
+    flex: 1;
+  }
+
+  /* Footer */
+  .footer {
+    position: absolute;
+    bottom: var(--footer-bottom);
+    left: 0;
+    right: 0;
+    height: var(--footer-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2vw;
+    background: var(--brand-accent);
+    z-index: 2;
+  }
+
+  .footer-name {
+    font-family: var(--brand-font-heading);
+    font-size: 2vw;
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-bg-primary);
+    letter-spacing: 0.03em;
+  }
+
+  /* Vertical adjustments */
+  @media (max-aspect-ratio: 3/4) {
+    .badge { font-size: 2vw; padding: 0.8vh 3vw; }
+    .bullets { gap: 3vh; }
+    .bullet-icon { width: 3.5vw; height: 3.5vw; }
+    .bullet-icon::after { width: 1.2vw; height: 1.2vw; }
+    .series-num { font-size: 2.6vw; }
+    .footer-name { font-size: 2.6vw; }
+  }
+
+  /* Horizontal adjustments */
+  @media (min-aspect-ratio: 4/3) {
+    .badge { font-size: 1.2vw; }
+    .bullets { gap: 2vh; }
+    .series-num { font-size: 1.6vw; }
+    .footer-name { font-size: 1.8vw; }
+  }
+</style>
+</head>
+<body>
+
+<div class="accent-line"></div>
+<div class="series-num" id="seriesNum"></div>
+
+<div class="card">
+  <div class="badge" id="badge"></div>
+  <div class="title" id="title">Tip title here</div>
+  <ul class="bullets" id="bullets"></ul>
+</div>
+
+<div class="footer">
+  <span class="footer-name" id="footerName"></span>
+</div>
+
+<script src="_base.js"></script>
+<script>
+  initTemplate(({ params, styles, brandName }) => {
+    document.getElementById('footerName').textContent = brandName;
+
+    const badge = params.get('badge');
+    const title = params.get('title');
+    const bullets = params.get('bullets');
+    const num = params.get('num');
+
+    if (badge) document.getElementById('badge').textContent = badge;
+    if (title) document.getElementById('title').textContent = title;
+    if (num) document.getElementById('seriesNum').textContent = '#' + num;
+
+    if (bullets) {
+      const list = document.getElementById('bullets');
+      list.innerHTML = '';
+      bullets.split('|').forEach(text => {
+        const li = document.createElement('li');
+        li.className = 'bullet';
+        li.innerHTML = '<div class="bullet-icon"></div><span class="bullet-text"></span>';
+        li.querySelector('.bullet-text').textContent = text.trim();
+        list.appendChild(li);
+      });
+    }
+
+    autoSizeText(document.getElementById('title'), [
+      [30, 5], [60, 4.2], [100, 3.5], [Infinity, 2.8]
+    ]);
+
+    const vw = window.innerWidth / 100;
+    const bulletSize = Math.max(2 * vw, 16);
+    document.querySelectorAll('.bullet-text').forEach(b => b.style.fontSize = bulletSize + 'px');
+  });
+</script>
+</body>
+</html>

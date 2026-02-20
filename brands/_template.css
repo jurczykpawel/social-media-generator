@@ -1,0 +1,68 @@
+/*
+ * [BRAND NAME] — brand tokens template
+ *
+ * How to add a new brand:
+ * 1. Copy this file and rename to yourbrand.css
+ * 2. Add Google Fonts @import at the top
+ * 3. Fill in all --brand-* values from the brand's design system
+ * 4. Test: python generate.py --brand yourbrand --template quote-card --text "Test"
+ */
+
+/* @import url('https://fonts.googleapis.com/css2?family=YOUR+FONT&display=swap'); */
+
+:root {
+    /* Identity — displayed in template footers */
+    --brand-name: "Your Brand Name";
+    --brand-tagline: "// yourbrand.com";
+
+    /* Backgrounds */
+    --brand-bg-primary: ;     /* Main page background */
+    --brand-bg-secondary: ;   /* Slightly different bg for sections */
+    --brand-bg-surface: ;     /* Interactive surface bg */
+    --brand-bg-card: ;        /* Card background */
+
+    /* Accent color — primary brand color for highlights */
+    --brand-accent: ;
+    --brand-accent-hover: ;
+    --brand-accent-dim: ;     /* Very transparent version, rgba() */
+
+    /* CTA color — call-to-action buttons */
+    --brand-cta: ;
+    --brand-cta-hover: ;
+    --brand-cta-text: ;       /* Text color ON the CTA background */
+
+    /* Text colors */
+    --brand-text-primary: ;   /* Main text, highest contrast */
+    --brand-text-secondary: ; /* Secondary text */
+    --brand-text-muted: ;     /* Subtle text (WCAG AA min 4.5:1) */
+
+    /* Borders & Shadows */
+    --brand-border: ;
+    --brand-border-accent: ;
+    --brand-shadow-sm: ;
+    --brand-shadow-md: ;
+
+    /* Semantic colors */
+    --brand-success: ;
+    --brand-error: ;
+
+    /* Typography — font families */
+    --brand-font-heading: ;   /* e.g. 'Outfit', system-ui, sans-serif */
+    --brand-font-body: ;      /* e.g. 'Inter', system-ui, sans-serif */
+    --brand-font-mono: ;      /* e.g. 'JetBrains Mono', monospace */
+    --brand-heading-weight: ;      /* Normal heading weight (e.g. 700) */
+    --brand-heading-weight-heavy: ; /* Heaviest heading weight (e.g. 900) */
+
+    /* Border radius */
+    --brand-radius-sm: 6px;
+    --brand-radius-md: 10px;
+    --brand-radius-lg: 16px;
+
+    /* Theme hint — 'dark' or 'light' */
+    --brand-theme: ;
+
+    /* Badge backgrounds — subtle tinted bg for tags/badges */
+    --brand-badge-accent-bg: ;
+    --brand-badge-cta-bg: ;
+    --brand-badge-success-bg: ;
+}

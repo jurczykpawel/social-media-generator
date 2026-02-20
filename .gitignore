@@ -1,0 +1,33 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Generated output
+output/
+
+# Local brand files (keep only example and template in repo)
+brands/*.css
+!brands/example.css
+!brands/_template.css
+
+# Local config (may contain absolute paths)
+config.json
+
+# Local content (keep only example in repo)
+content/*.json
+!content/example.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

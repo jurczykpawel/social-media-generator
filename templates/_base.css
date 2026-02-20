@@ -1,0 +1,78 @@
+/* Shared base styles for all templates */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: var(--brand-font-body);
+  background: var(--brand-bg-primary);
+  color: var(--brand-text-primary);
+  position: relative;
+}
+
+/*
+ * Safe zones — keep important content inside these margins.
+ * Platforms overlay UI (usernames, like buttons, captions, reply bars)
+ * on top of images/videos. These variables define the minimum padding
+ * so nothing gets hidden.
+ *
+ * Sources:
+ * - IG Story: 250px top, 320px bottom, 65px left, 130px right
+ * - IG Reels: 108px top, 320px bottom, 60px left, 120px right
+ * - TikTok:   200px top, 380px bottom, 60px left, 120px right
+ * - YT Shorts: 288px top, 450px bottom, 48px left, 192px right
+ * - YT Thumbnail: 72px top, 90px bottom, 102px left, 140px right
+ *
+ * We use the most conservative values per aspect ratio.
+ */
+
+:root {
+  /* Post / Feed (1080x1080) — minimal UI overlay */
+  --safe-top: 7.5vh;
+  --safe-bottom: 7.5vh;
+  --safe-left: 7.5vw;
+  --safe-right: 7.5vw;
+  --footer-bottom: 0;
+  --footer-height: 7vh;
+}
+
+/* Story / Reels / Shorts / TikTok (9:16 vertical) */
+@media (max-aspect-ratio: 3/4) {
+  :root {
+    --safe-top: 15vh;      /* ~288px at 1920h — covers YT Shorts status bar */
+    --safe-bottom: 24vh;   /* ~460px at 1920h — covers YT Shorts buttons+caption */
+    --safe-left: 6vw;      /* ~65px at 1080w */
+    --safe-right: 12vw;    /* ~130px at 1080w — covers action buttons */
+    --footer-bottom: 17vh; /* ~326px — sits above platform UI */
+    --footer-height: 5vh;
+  }
+}
+
+/* YouTube thumbnail / landscape (16:9) */
+@media (min-aspect-ratio: 4/3) {
+  :root {
+    --safe-top: 10vh;      /* ~72px at 720h */
+    --safe-bottom: 14vh;   /* ~101px at 720h — covers progress bar + duration */
+    --safe-left: 8vw;      /* ~102px at 1280w */
+    --safe-right: 11vw;    /* ~141px at 1280w — covers duration badge */
+    --footer-bottom: 0;
+    --footer-height: 8vh;
+  }
+}
+
+/* Background image (optional, injected by JS) */
+.bg-image {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+.bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--brand-bg-primary);
+  opacity: 0.65;
+  z-index: 0;
+}
