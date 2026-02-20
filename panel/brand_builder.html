@@ -1,0 +1,107 @@
+{% extends "_layout.html" %}
+{% block title %}Brand Builder{% endblock %}
+
+{% block content %}
+<h1>Brand Builder</h1>
+<p>Pick colors and fonts, preview live, save as brand CSS.</p>
+
+<form method="post" action="/panel/brands/builder" id="builderForm">
+  <div class="builder-grid">
+    <div class="builder-form">
+      <fieldset>
+        <legend>Identity</legend>
+        <label>Brand slug (filename)
+          <input type="text" name="brand_name" placeholder="mybrand" required pattern="[a-z0-9-]+">
+        </label>
+        <label>Display name
+          <input type="text" name="display_name" placeholder="My Brand">
+        </label>
+        <label>Tagline
+          <input type="text" name="tagline" placeholder="// mybrand.com">
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Theme</legend>
+        <div class="radio-row">
+          <label><input type="radio" name="theme" value="dark" checked onchange="applyDefaults()"> Dark</label>
+          <label><input type="radio" name="theme" value="light" onchange="applyDefaults()"> Light</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Colors</legend>
+        <label>Background <input type="color" name="bg_primary" value="#0F1117"></label>
+        <label>Background secondary <input type="color" name="bg_secondary" value="#151720"></label>
+        <label>Accent <input type="color" name="accent" value="#2DD4BF"></label>
+        <label>CTA <input type="color" name="cta" value="#F97316"></label>
+        <label>CTA text <input type="color" name="cta_text" value="#0F1117"></label>
+        <label>Text primary <input type="color" name="text_primary" value="#F1F5F9"></label>
+        <label>Text secondary <input type="color" name="text_secondary" value="#94A3B8"></label>
+        <label>Text muted <input type="color" name="text_muted" value="#64748B"></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Typography</legend>
+        <label>Heading font
+          <select name="font_heading">
+            <option value="Inter">Inter</option>
+            <option value="Space Grotesk">Space Grotesk</option>
+            <option value="Outfit">Outfit</option>
+            <option value="Poppins">Poppins</option>
+            <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+            <option value="DM Sans">DM Sans</option>
+            <option value="Lato">Lato</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="Raleway">Raleway</option>
+          </select>
+        </label>
+        <label>Body font
+          <select name="font_body">
+            <option value="Inter" selected>Inter</option>
+            <option value="Space Grotesk">Space Grotesk</option>
+            <option value="Outfit">Outfit</option>
+            <option value="Poppins">Poppins</option>
+            <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+            <option value="DM Sans">DM Sans</option>
+            <option value="Lato">Lato</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="Raleway">Raleway</option>
+          </select>
+        </label>
+        <label>Heading weight
+          <select name="heading_weight">
+            <option value="600">600 (Semi-bold)</option>
+            <option value="700" selected>700 (Bold)</option>
+            <option value="800">800 (Extra-bold)</option>
+            <option value="900">900 (Black)</option>
+          </select>
+        </label>
+        <label>Heavy heading weight
+          <select name="heading_weight_heavy">
+            <option value="700" selected>700 (Bold)</option>
+            <option value="800">800 (Extra-bold)</option>
+            <option value="900">900 (Black)</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <button type="submit" class="btn btn-primary">Save Brand</button>
+    </div>
+
+    <div class="builder-preview">
+      <h3>Preview</h3>
+      <div class="preview-box" id="previewBox"
+           style="background: #0F1117; color: #F1F5F9; padding: 2rem; border-radius: 12px;">
+        <div style="font-family: var(--pf-heading); font-size: 0.8rem; letter-spacing: 0.1em; opacity: 0.5; margin-bottom: 1rem;" id="pvTagline">// mybrand.com</div>
+        <div style="font-family: var(--pf-heading); font-weight: 700; font-size: 1.5rem; line-height: 1.2; margin-bottom: 0.75rem;" id="pvHeadline">Ship it before it's <span id="pvAccent" style="color: #2DD4BF">perfect</span></div>
+        <div style="font-size: 0.9rem; opacity: 0.7; margin-bottom: 1.5rem;" id="pvBody">Quality is not an act, it is a habit.</div>
+        <div style="display:inline-block; padding: 0.5rem 1.5rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem;" id="pvCta">WATCH NOW</div>
+        <div style="margin-top: 1.5rem; padding: 0.5rem; text-align: center; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1);" id="pvFooter"></div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script src="/static/brand_builder.js"></script>
+{% endblock %}

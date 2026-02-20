@@ -22,6 +22,12 @@ config.json
 content/*.json
 !content/example.json
 
+# Runtime data (SQLite DB, user brands)
+data/
+
+# Environment
+.env
+
 # OS
 .DS_Store
 Thumbs.db

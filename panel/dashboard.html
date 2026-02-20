@@ -1,0 +1,76 @@
+{% extends "_layout.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="cards-row">
+  <div class="card">
+    <div class="card-label">Credits</div>
+    <div class="card-value">{{ user.credits }}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">API Token</div>
+    <div class="card-value token-value" id="tokenValue">{{ user.api_token[:8] }}...{{ user.api_token[-4:] }}</div>
+    <div class="card-actions">
+      <button onclick="copyToken()" class="btn-sm">Copy full token</button>
+      <form method="post" action="/panel/token/regenerate" style="display:inline">
+        <button type="submit" class="btn-sm btn-danger" onclick="return confirm('Regenerate token? The old one will stop working.')">Regenerate</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<h2>Quick Start</h2>
+<div class="code-block">
+<pre>curl -X POST {{ request.base_url }}api/generate \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"brand":"example","template":"quote-card","size":"post","text":"Hello world","attr":"Author"}' \
+  -o output.png</pre>
+</div>
+
+<h2>Downloads</h2>
+<div class="cards-row">
+  <a href="/panel/downloads/ai-instructions" class="card card-link">
+    <div class="card-label">AI Brand Instructions</div>
+    <div class="card-desc">Markdown file to paste into ChatGPT/Claude for brand CSS generation.</div>
+  </a>
+  <a href="/panel/downloads/claude-skill" class="card card-link">
+    <div class="card-label">Claude Code Skill</div>
+    <div class="card-desc">Skill file for Claude Code to create brand CSS interactively.</div>
+  </a>
+</div>
+
+{% if log %}
+<h2>Recent Activity</h2>
+<table>
+  <thead>
+    <tr><th>Date</th><th>Credits</th><th>Reason</th></tr>
+  </thead>
+  <tbody>
+    {% for entry in log %}
+    <tr>
+      <td>{{ entry.created_at[:16] }}</td>
+      <td class="{{ 'credit-pos' if entry.delta > 0 else 'credit-neg' }}">{{ '+' if entry.delta > 0 else '' }}{{ entry.delta }}</td>
+      <td>{{ entry.reason }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<input type="hidden" id="fullToken" value="{{ user.api_token }}">
+
+<script>
+function copyToken() {
+  const token = document.getElementById('fullToken').value;
+  navigator.clipboard.writeText(token).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy full token', 1500);
+  });
+}
+</script>
+{% endblock %}

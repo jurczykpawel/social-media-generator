@@ -1,0 +1,19 @@
+{% extends "_layout.html" %}
+{% block title %}Preview: {{ brand_name }}{% endblock %}
+
+{% block content %}
+<h1>Preview: {{ brand_name }}</h1>
+<p>Templates rendered with your brand at 540x540 (scaled down from 1080x1080).</p>
+
+<div class="preview-grid">
+  {% for tpl in templates %}
+  <div class="preview-item">
+    <h3>{{ tpl }}</h3>
+    <iframe src="/preview/template/{{ tpl }}?brand={{ brand_name }}&brands_dir=/preview/brands&text=Ship+it+before+it's+perfect.&attr=A+wise+engineer&title=How+to+*automate*+everything&badge=PRO+TIP&cta=Watch+now&bullets=First+point|Second+point|Third+point&num=001"
+            width="540" height="540" style="border:1px solid #333; border-radius:8px; transform-origin:top left;"></iframe>
+  </div>
+  {% endfor %}
+</div>
+
+<a href="/panel/brands" class="btn">Back to brands</a>
+{% endblock %}

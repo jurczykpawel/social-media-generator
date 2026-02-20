@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Panel{% endblock %} — Social Media Generator</title>
+<link rel="stylesheet" href="/static/panel.css">
+{% block head %}{% endblock %}
+</head>
+<body>
+{% if user %}
+<nav class="nav">
+  <a href="/panel" class="nav-logo">SMG</a>
+  <div class="nav-links">
+    <a href="/panel">Dashboard</a>
+    <a href="/panel/brands">Brands</a>
+    <form method="post" action="/auth/logout" style="display:inline">
+      <button type="submit" class="nav-link-btn">Logout</button>
+    </form>
+  </div>
+</nav>
+{% endif %}
+
+<main class="container">
+  {% block content %}{% endblock %}
+</main>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

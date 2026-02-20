@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Social Media Graphics Generator
+Social Media Graphics Generator — CLI
 Renders HTML templates with brand-specific styling via Playwright screenshots.
 
 Usage:
@@ -20,24 +20,18 @@ This keeps proprietary brand data separate from the tool itself.
 import argparse
 import json
 import sys
-import urllib.parse
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-SIZES = {
-    'post':    (1080, 1080),
-    'story':   (1080, 1920),
-    'youtube': (1280, 720),
-}
+from engine import (
+    SIZES, CONTENT_KEYS, META_KEYS, TEMPLATES_DIR,
+    parse_size, validate_brand, validate_template, build_url,
+)
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
-TEMPLATES_DIR = SCRIPT_DIR / 'templates'
 DEFAULT_BRANDS_DIR = SCRIPT_DIR / 'brands'
 DEFAULT_OUTPUT_DIR = SCRIPT_DIR / 'output'
 CONFIG_FILE = SCRIPT_DIR / 'config.json'
-
-CONTENT_KEYS = ['text', 'attr', 'title', 'badge', 'bullets', 'number', 'label', 'date', 'cta', 'num', 'urgency', 'bg_opacity']
-META_KEYS = {'brand', 'template', 'size', 'output_prefix', 'output_dir', 'brands_dir'}
 
 
 def load_config() -> dict:
@@ -57,51 +51,6 @@ def resolve_dirs(args, config: dict) -> tuple:
                  Path(config['output_dir']) if 'output_dir' in config else \
                  DEFAULT_OUTPUT_DIR
     return brands_dir.resolve(), output_dir.resolve()
-
-
-def validate_brand(brand: str, brands_dir: Path) -> Path:
-    path = brands_dir / f'{brand}.css'
-    if not path.exists():
-        available = sorted(f.stem for f in brands_dir.glob('*.css') if not f.stem.startswith('_'))
-        print(f"Error: Brand '{brand}' not found in {brands_dir}/", file=sys.stderr)
-        if available:
-            print(f"  Available: {', '.join(available)}", file=sys.stderr)
-        else:
-            print(f"  No brand files found. Create one from _template.css", file=sys.stderr)
-        sys.exit(1)
-    return path
-
-
-def validate_template(template: str) -> Path:
-    path = TEMPLATES_DIR / f'{template}.html'
-    if not path.exists():
-        available = sorted(f.stem for f in TEMPLATES_DIR.glob('*.html') if not f.stem.startswith('_'))
-        print(f"Error: Template '{template}' not found. Available: {', '.join(available)}", file=sys.stderr)
-        sys.exit(1)
-    return path
-
-
-def parse_size(size_str: str) -> list:
-    if size_str == 'all':
-        return [(name, w, h) for name, (w, h) in SIZES.items()]
-    if size_str in SIZES:
-        w, h = SIZES[size_str]
-        return [(size_str, w, h)]
-    if 'x' in size_str:
-        parts = size_str.split('x')
-        return [('custom', int(parts[0]), int(parts[1]))]
-    print(f"Error: Unknown size '{size_str}'. Use: {', '.join(SIZES.keys())}, all, or WxH", file=sys.stderr)
-    sys.exit(1)
-
-
-def build_url(template_path: Path, brand: str, brands_dir: Path, params: dict) -> str:
-    """Build file:// URL with brand path and content params."""
-    query = urllib.parse.urlencode({
-        'brand': brand,
-        'brands_dir': str(brands_dir),
-        **params
-    })
-    return f'file://{template_path}?{query}'
 
 
 def generate_image(page, url: str, width: int, height: int, output_path: Path):

@@ -1,0 +1,22 @@
+{% extends "_layout.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="login-box">
+  <h1>Social Media Generator</h1>
+  <p class="subtitle">Sign in with your email — no password needed.</p>
+
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+
+  {% if message %}
+  <div class="alert alert-success">{{ message }}</div>
+  {% else %}
+  <form method="post" action="/auth/login">
+    <input type="email" name="email" placeholder="you@example.com" required autofocus>
+    <button type="submit">Send magic link</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

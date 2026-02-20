@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./brands:/app/brands:ro
+      - app_data:/app/data
+    env_file:
+      - .env
+    environment:
+      - BASE_URL=http://localhost:8000
+    restart: unless-stopped
+
+volumes:
+  app_data:

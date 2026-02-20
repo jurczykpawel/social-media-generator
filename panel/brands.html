@@ -1,0 +1,51 @@
+{% extends "_layout.html" %}
+{% block title %}Brands{% endblock %}
+
+{% block content %}
+<h1>Your Brands</h1>
+
+{% if user_brands %}
+<div class="brand-grid">
+  {% for name in user_brands %}
+  <div class="brand-card">
+    <div class="brand-name">{{ name }}</div>
+    <div class="brand-actions">
+      <a href="/panel/brands/{{ name }}/preview" class="btn-sm">Preview</a>
+      <a href="/panel/brands/{{ name }}/delete" class="btn-sm btn-danger"
+         onclick="return confirm('Delete brand {{ name }}?')">Delete</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty-state">No custom brands yet. Create one below or upload a CSS file.</p>
+{% endif %}
+
+<h2>Built-in Brands</h2>
+<div class="brand-grid">
+  {% for name in builtin_brands %}
+  <div class="brand-card brand-builtin">
+    <div class="brand-name">{{ name }}</div>
+    <a href="/panel/brands/{{ name }}/preview" class="btn-sm">Preview</a>
+  </div>
+  {% endfor %}
+</div>
+
+<h2>Add Brand</h2>
+<div class="cards-row">
+  <div class="card">
+    <div class="card-label">Build a brand</div>
+    <div class="card-desc">Pick colors and fonts visually.</div>
+    <a href="/panel/brands/builder" class="btn">Open Builder</a>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Upload CSS</div>
+    <div class="card-desc">Upload a brand CSS file directly.</div>
+    <form method="post" action="/panel/brands/upload" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".css" required>
+      <button type="submit" class="btn">Upload</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
