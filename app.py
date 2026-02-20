@@ -19,6 +19,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature
 from pydantic import BaseModel
 
 import db
+import mailer
 from engine import (
     SIZES, CONTENT_KEYS, META_KEYS, DEFAULT_BRANDS_DIR, TEMPLATES_DIR,
     parse_size, validate_brand, validate_template, list_templates, list_brands,
@@ -34,7 +35,6 @@ DOCS_DIR = SCRIPT_DIR / 'docs'
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 BASE_URL = os.environ.get('BASE_URL', 'http://localhost:8000')
-RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 EMAIL_FROM = os.environ.get('EMAIL_FROM', 'login@localhost')
 CREDITS_PER_PURCHASE = 100
 
@@ -140,37 +140,27 @@ async def login_submit(request: Request, email: str = Form(...)):
     token = db.create_magic_link(email)
     link = f"{BASE_URL}/auth/verify?token={token}"
 
-    # Send email
-    if RESEND_API_KEY:
-        try:
-            import resend
-            resend.api_key = RESEND_API_KEY
-            resend.Emails.send({
-                "from": EMAIL_FROM,
-                "to": email,
-                "subject": "Your login link — Social Media Generator",
-                "html": f"""
-                    <p>Click to log in:</p>
-                    <p><a href="{link}" style="font-size:18px;font-weight:bold">{link}</a></p>
-                    <p>This link expires in 15 minutes.</p>
-                """,
-            })
-        except Exception as e:
-            return panel_templates.TemplateResponse("login.html", {
-                "request": request, "message": None,
-                "error": f"Failed to send email: {e}",
-            })
-    else:
-        # Dev mode: print link to console
-        print(f"\n{'='*60}")
-        print(f"MAGIC LINK for {email}:")
-        print(f"  {link}")
-        print(f"{'='*60}\n")
+    # Send email (provider auto-detected: AWS SES > Resend > console)
+    try:
+        mailer.send_email(
+            to=email,
+            subject="Your login link — Social Media Generator",
+            html=f"""
+                <p>Click to log in:</p>
+                <p><a href="{link}" style="font-size:18px;font-weight:bold">{link}</a></p>
+                <p>This link expires in 15 minutes.</p>
+            """,
+        )
+    except Exception as e:
+        return panel_templates.TemplateResponse("login.html", {
+            "request": request, "message": None,
+            "error": f"Failed to send email: {e}",
+        })
 
     return panel_templates.TemplateResponse("login.html", {
         "request": request, "error": None,
-        "message": "Check your email for the login link." if RESEND_API_KEY
-                   else f"Dev mode — check console for magic link.",
+        "message": "Check your email for the login link." if mailer.is_configured()
+                   else "Dev mode — check console for magic link.",
     })
 
 
