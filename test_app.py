@@ -440,6 +440,36 @@ def test_webhook_missing_email(test_client):
     assert r.status_code == 400
 
 
+def test_webhook_lookup_by_user_id(test_client, tmp_db):
+    """Webhook can identify user by user_id instead of email."""
+    user = tmp_db.create_user('userid-test@example.com', credits=10)
+    r = test_client.post('/webhook/credits',
+        json={'user_id': user['id'], 'credits': 75, 'reference': 'by-id'},
+        headers={'Authorization': 'Bearer test-webhook-secret'},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data['credits_added'] == 75
+    assert data['new_balance'] == 85
+    updated = tmp_db.get_user(user['id'])
+    assert updated['credits'] == 85
+
+
+def test_webhook_email_resolves_existing_user(test_client, tmp_db):
+    """Webhook with email finds existing user and adds credits to their account."""
+    user = tmp_db.create_user('existing@example.com', credits=30)
+    r = test_client.post('/webhook/credits',
+        json={'email': 'existing@example.com', 'credits': 50, 'reference': 'topup'},
+        headers={'Authorization': 'Bearer test-webhook-secret'},
+    )
+    assert r.status_code == 200
+    assert r.json()['new_balance'] == 80
+    # Verify it's the same user (not a new one)
+    updated = tmp_db.get_user(user['id'])
+    assert updated['credits'] == 80
+    assert updated['id'] == user['id']
+
+
 # ══════════════════════════════════════════════════════
 # Helpers
 # ══════════════════════════════════════════════════════
