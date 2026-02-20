@@ -10,7 +10,26 @@ services:
       - .env
     environment:
       - BASE_URL=http://localhost:8000
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: smg
+      POSTGRES_USER: smg
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smg-dev-password}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smg"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
 volumes:
   app_data:
+  pg_data:
