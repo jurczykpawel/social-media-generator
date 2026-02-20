@@ -38,6 +38,15 @@ BASE_URL = os.environ.get('BASE_URL', 'http://localhost:8000')
 EMAIL_FROM = os.environ.get('EMAIL_FROM', 'login@localhost')
 CREDITS_PER_PURCHASE = 100
 
+# Product-to-credits mapping (JSON string in env)
+# Example: {"100-credits": 100, "500-credits": 500, "pro-plan": 1000}
+import json as _json
+_products_raw = os.environ.get('CREDIT_PRODUCTS', '{}')
+try:
+    CREDIT_PRODUCTS: dict[str, int] = _json.loads(_products_raw)
+except _json.JSONDecodeError:
+    CREDIT_PRODUCTS = {}
+
 signer = URLSafeTimedSerializer(SECRET_KEY)
 
 # --- App ---
@@ -502,34 +511,112 @@ async def download_claude_skill(request: Request):
 
 
 # ============================================================
-# Credits (external — GateFlow handles payments, calls this webhook)
+# Credits webhook (universal — works with any payment provider)
 # ============================================================
+
+def _verify_webhook(request: Request, body: bytes) -> None:
+    """Verify webhook authenticity. Supports Bearer token or HMAC signature."""
+    import hashlib
+    import hmac
+
+    # Option 1: HMAC signature (GateFlow, Stripe-style)
+    hmac_secret = os.environ.get("WEBHOOK_HMAC_SECRET", "")
+    signature = request.headers.get("X-Webhook-Signature", "") or \
+                request.headers.get("X-GateFlow-Signature", "")
+    if hmac_secret and signature:
+        expected = hmac.new(hmac_secret.encode(), body, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(signature, expected):
+            raise HTTPException(401, "Invalid HMAC signature")
+        return
+
+    # Option 2: Bearer token
+    bearer_secret = os.environ.get("WEBHOOK_SECRET", "")
+    auth = request.headers.get("Authorization", "")
+    if bearer_secret and auth == f"Bearer {bearer_secret}":
+        return
+
+    raise HTTPException(401, "Unauthorized webhook")
+
+
+def _resolve_credits(data: dict) -> int:
+    """Resolve credit amount from explicit value or product mapping."""
+    # Explicit credits
+    if "credits" in data and data["credits"]:
+        return int(data["credits"])
+
+    # Product slug/id lookup
+    product = data.get("product") or ""
+    if isinstance(product, dict):
+        product = product.get("slug") or product.get("id") or ""
+    if product and product in CREDIT_PRODUCTS:
+        return CREDIT_PRODUCTS[product]
+
+    # Default
+    if CREDITS_PER_PURCHASE:
+        return CREDITS_PER_PURCHASE
+
+    raise HTTPException(400, "Cannot determine credits: set 'credits' or configure CREDIT_PRODUCTS")
+
+
+def _resolve_user(data: dict) -> dict:
+    """Find user by email or user_id. Creates account if email-only and not found."""
+    # By user_id
+    user_id = data.get("user_id")
+    if user_id:
+        user = db.get_user(user_id)
+        if user:
+            return user
+
+    # By email (from top-level or nested customer object)
+    email = data.get("email") or ""
+    customer = data.get("customer") or data.get("data", {}).get("customer", {})
+    if not email and isinstance(customer, dict):
+        email = customer.get("email", "")
+    email = email.strip().lower()
+
+    if not email:
+        raise HTTPException(400, "email or user_id required")
+
+    user = db.get_user_by_email(email)
+    if user:
+        return user
+
+    # Auto-create user on first purchase
+    return db.create_user(email)
+
 
 @app.post("/webhook/credits")
 async def credits_webhook(request: Request):
-    """External payment provider (GateFlow) calls this to add credits after purchase.
-    Expects JSON: {"user_id": "...", "credits": 100, "reference": "gateflow:xxx"}
-    Protected by a shared secret in Authorization header.
-    """
-    auth = request.headers.get("Authorization", "")
-    webhook_secret = os.environ.get("WEBHOOK_SECRET", "")
-    if not webhook_secret or auth != f"Bearer {webhook_secret}":
-        raise HTTPException(401, "Invalid webhook secret")
+    """Universal webhook to add credits after purchase.
 
-    data = await request.json()
-    user_id = data.get("user_id")
-    credits = data.get("credits", CREDITS_PER_PURCHASE)
+    Accepts any of these formats:
+
+    Direct:     {"email": "x@y.com", "credits": 100, "reference": "order_123"}
+    Product:    {"email": "x@y.com", "product": "100-credits", "reference": "..."}
+    GateFlow:   {"event": "purchase.completed", "data": {"customer": {"email": "..."}, "product": {"slug": "..."}, ...}}
+
+    Auth: Bearer token (WEBHOOK_SECRET) or HMAC signature (WEBHOOK_HMAC_SECRET).
+    Product-to-credits mapping configured via CREDIT_PRODUCTS env var (JSON).
+    """
+    body = await request.body()
+    _verify_webhook(request, body)
+
+    raw = await request.json()
+
+    # Normalize GateFlow's nested format to flat
+    if "event" in raw and "data" in raw:
+        data = raw["data"]
+        data["reference"] = data.get("reference", f"{raw['event']}:{raw['data'].get('order', {}).get('sessionId', '')}")
+    else:
+        data = raw
+
+    user = _resolve_user(data)
+    credits = _resolve_credits(data)
     reference = data.get("reference", "webhook")
 
-    if not user_id:
-        raise HTTPException(400, "user_id required")
-
-    user = db.get_user(user_id)
-    if not user:
-        raise HTTPException(404, "User not found")
-
-    db.add_credits(user_id, credits, reference)
-    return {"ok": True, "new_balance": user['credits'] + credits}
+    db.add_credits(user['id'], credits, reference)
+    new_balance = user['credits'] + credits
+    return {"ok": True, "email": user['email'], "credits_added": credits, "new_balance": new_balance}
 
 
 # ============================================================
