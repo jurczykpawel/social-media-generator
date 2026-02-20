@@ -1,64 +1,48 @@
 """
-Email sending abstraction — supports multiple providers.
+Email sending via SMTP — works with any provider.
 
-Provider is auto-detected from environment variables:
-  1. AWS SES  — if AWS_SES_REGION is set (uses boto3)
-  2. Resend   — if RESEND_API_KEY is set
-  3. Console  — fallback, prints to stdout (dev mode)
+Configure in .env:
+    SMTP_HOST=email-smtp.eu-central-1.amazonaws.com   # AWS SES
+    SMTP_PORT=587
+    SMTP_USER=AKIA...
+    SMTP_PASS=...
+    EMAIL_FROM=login@yourdomain.com
 
-Usage:
-    from mailer import send_email
-    send_email("to@example.com", "Subject", "<p>HTML body</p>")
+Works out of the box with: AWS SES, Resend, Mailgun, SendGrid,
+Postmark, any SMTP server.
+
+If SMTP_HOST is not set → dev mode (prints to console).
 """
 
 import os
-
-
-def _get_provider() -> str:
-    if os.environ.get('AWS_SES_REGION'):
-        return 'ses'
-    if os.environ.get('RESEND_API_KEY'):
-        return 'resend'
-    return 'console'
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 def send_email(to: str, subject: str, html: str) -> None:
-    """Send an email. Raises on failure."""
-    provider = _get_provider()
-
-    if provider == 'ses':
-        _send_ses(to, subject, html)
-    elif provider == 'resend':
-        _send_resend(to, subject, html)
-    else:
+    """Send an email via SMTP. Raises on failure."""
+    host = os.environ.get('SMTP_HOST', '')
+    if not host:
         _send_console(to, subject, html)
+        return
 
-
-def _send_ses(to: str, subject: str, html: str) -> None:
-    import boto3
-    region = os.environ['AWS_SES_REGION']
+    port = int(os.environ.get('SMTP_PORT', '587'))
+    user = os.environ.get('SMTP_USER', '')
+    password = os.environ.get('SMTP_PASS', '')
     sender = os.environ.get('EMAIL_FROM', 'noreply@localhost')
-    client = boto3.client('ses', region_name=region)
-    client.send_email(
-        Source=sender,
-        Destination={'ToAddresses': [to]},
-        Message={
-            'Subject': {'Data': subject, 'Charset': 'UTF-8'},
-            'Body': {'Html': {'Data': html, 'Charset': 'UTF-8'}},
-        },
-    )
 
+    msg = MIMEMultipart('alternative')
+    msg['From'] = sender
+    msg['To'] = to
+    msg['Subject'] = subject
+    msg.attach(MIMEText(html, 'html', 'utf-8'))
 
-def _send_resend(to: str, subject: str, html: str) -> None:
-    import resend
-    resend.api_key = os.environ['RESEND_API_KEY']
-    sender = os.environ.get('EMAIL_FROM', 'noreply@localhost')
-    resend.Emails.send({
-        "from": sender,
-        "to": to,
-        "subject": subject,
-        "html": html,
-    })
+    with smtplib.SMTP(host, port) as server:
+        server.starttls()
+        if user:
+            server.login(user, password)
+        server.sendmail(sender, [to], msg.as_string())
 
 
 def _send_console(to: str, subject: str, html: str) -> None:
@@ -70,5 +54,5 @@ def _send_console(to: str, subject: str, html: str) -> None:
 
 
 def is_configured() -> bool:
-    """Return True if a real email provider is configured."""
-    return _get_provider() != 'console'
+    """Return True if SMTP is configured (not dev mode)."""
+    return bool(os.environ.get('SMTP_HOST'))
