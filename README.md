@@ -1,10 +1,51 @@
 # Social Media Graphics Generator
 
-**One text, multiple formats.** Generate brand-consistent social media graphics from HTML templates. Instagram posts, Stories, YouTube thumbnails — all pixel-perfect, all on-brand.
+> **One text, multiple formats.** Brand-consistent social media graphics from HTML templates — pixel-perfect Instagram posts, Stories, and YouTube thumbnails from a single command.
 
-HTML templates use CSS custom properties (`--brand-*`) for theming. A Python script renders them via headless Chromium (Playwright) and saves PNGs. No Photoshop, no Canva, no manual resizing.
+![License](https://img.shields.io/badge/License-MIT-green)
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![Docker](https://img.shields.io/badge/Docker-ready-blue)
+![Tests](https://img.shields.io/badge/Tests-96_passed-brightgreen)
 
-Works as a **CLI tool**, a **REST API**, or both — with a built-in user panel for brand management.
+---
+
+## Why this?
+
+- **No Canva, no Photoshop** — define brand once in CSS, generate everything programmatically
+- **True pixel-perfect** — headless Chromium renders real HTML/CSS, not some SVG approximation
+- **3 formats, 1 command** — Instagram post (1080x1080), Story (9:16), YouTube thumbnail (16:9)
+- **Brand consistency** — CSS custom properties (`--brand-*`) guarantee on-brand output every time
+- **CLI + API + Panel** — use from terminal, integrate via REST API, or manage brands in the web UI
+- **Self-hosted** — your data, your server, no vendor lock-in
+
+**Alternative to:** Canva templates, Buffer image creator, manual resizing in Photoshop.
+
+**For:** content creators, social media managers, developers building content pipelines, anyone who needs consistent branded graphics at scale.
+
+---
+
+## Examples
+
+<table>
+<tr>
+<td><img src="docs/images/demo_quote_post_1080x1080.png" width="250" alt="Quote Card"></td>
+<td><img src="docs/images/demo_ad_post_1080x1080.png" width="250" alt="Ad Card"></td>
+</tr>
+<tr>
+<td align="center"><strong>quote-card</strong></td>
+<td align="center"><strong>ad-card</strong></td>
+</tr>
+<tr>
+<td><img src="docs/images/demo_tip_post_1080x1080.png" width="250" alt="Tip Card"></td>
+<td><img src="docs/images/demo_announce_post_1080x1080.png" width="250" alt="Announcement"></td>
+</tr>
+<tr>
+<td align="center"><strong>tip-card</strong></td>
+<td align="center"><strong>announcement</strong></td>
+</tr>
+</table>
+
+Same template, same text — all 3 sizes generated from one command. Brand colors and fonts come from a single CSS file.
 
 ---
 
@@ -13,6 +54,7 @@ Works as a **CLI tool**, a **REST API**, or both — with a built-in user panel 
 - [Quick Start](#quick-start)
 - [How It Works](#how-it-works)
 - [API](#api)
+- [Webhook](#webhook)
 - [User Panel](#user-panel)
 - [CLI Usage](#cli-usage)
 - [Templates](#templates)
@@ -20,8 +62,11 @@ Works as a **CLI tool**, a **REST API**, or both — with a built-in user panel 
 - [Safe Zones](#safe-zones)
 - [Create Your Brand](#create-your-brand)
 - [Adding Templates](#adding-templates)
+- [Tech Stack](#tech-stack)
 - [Configuration](#configuration)
 - [Project Structure](#project-structure)
+- [Tests](#tests)
+- [Contributing](#contributing)
 - [License](#license)
 
 ---
@@ -42,6 +87,8 @@ Open http://localhost:8000 — done.
 The default setup includes PostgreSQL. To use SQLite instead, remove the `db` service from `docker-compose.yml` and clear `DATABASE_URL` in `.env`.
 
 ### Local (dev)
+
+**Requirements:** Python 3.10+, pip
 
 ```bash
 git clone https://github.com/jurczykpawel/social-media-generator.git
@@ -66,8 +113,8 @@ uvicorn app:app
 ```
 brands/mybrand.css        templates/quote-card.html        engine.py
   --brand-accent: #2DD4BF    color: var(--brand-accent)      Playwright screenshot
-  --brand-font: 'Inter'      font: var(--brand-font)            ↓
-       ↓                          ↓                         PNG bytes
+  --brand-font: 'Inter'      font: var(--brand-font)            |
+       |                          |                         PNG bytes
        └──────────── merge ───────┘                    (returned via API or saved to disk)
 ```
 
@@ -97,7 +144,7 @@ Returns `image/png` for a single size, `application/zip` (3 PNGs) when `size=all
 
 **Cost:** 1 credit per image (`size=all` = 3 credits).
 
-### Other endpoints
+### Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -107,18 +154,78 @@ Returns `image/png` for a single size, `application/zip` (3 PNGs) when `size=all
 | `GET` | `/api/credits` | Check credit balance |
 | `GET` | `/health` | Health check |
 
-### Webhook (credit fulfillment)
+---
 
-External payment provider calls this to add credits after purchase:
+## Webhook
 
-```bash
-curl -X POST http://localhost:8000/webhook/credits \
-  -H "Authorization: Bearer WEBHOOK_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id":"...","credits":100,"reference":"order_123"}'
+Universal webhook for adding credits after purchase. Works with any payment provider.
+
+### Endpoint
+
+`POST /webhook/credits`
+
+### Authentication (pick one or both)
+
+| Method | Header | Env var |
+|--------|--------|---------|
+| **Bearer token** | `Authorization: Bearer <secret>` | `WEBHOOK_SECRET` |
+| **HMAC-SHA256** | `X-Webhook-Signature` or `X-GateFlow-Signature` | `WEBHOOK_HMAC_SECRET` |
+
+### Accepted formats
+
+**Direct credits:**
+```json
+{"email": "user@example.com", "credits": 100, "reference": "order_123"}
 ```
 
-Set `WEBHOOK_SECRET` in `.env` to protect this endpoint.
+**Product mapping** (slug resolved via `CREDIT_PRODUCTS` env var):
+```json
+{"email": "user@example.com", "product": "100-credits", "reference": "order_456"}
+```
+
+**GateFlow / nested format:**
+```json
+{
+  "event": "purchase.completed",
+  "data": {
+    "customer": {"email": "user@example.com"},
+    "product": {"slug": "500-credits"},
+    "order": {"amount": 4900, "sessionId": "cs_abc123"}
+  }
+}
+```
+
+### User resolution
+
+The webhook finds users by `user_id` or `email`. If the email doesn't exist, a new account is auto-created on first purchase.
+
+### Product-to-credits mapping
+
+Set `CREDIT_PRODUCTS` in `.env` as JSON:
+
+```bash
+CREDIT_PRODUCTS={"100-credits": 100, "500-credits": 500, "unlimited": 10000}
+```
+
+When a webhook arrives with `"product": "500-credits"`, the system maps it to 500 credits.
+
+### Example with curl
+
+```bash
+# Bearer token auth
+curl -X POST http://localhost:8000/webhook/credits \
+  -H "Authorization: Bearer $WEBHOOK_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","credits":100,"reference":"order_123"}'
+
+# HMAC signature auth
+PAYLOAD='{"email":"user@example.com","product":"100-credits"}'
+SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$WEBHOOK_HMAC_SECRET" | awk '{print $2}')
+curl -X POST http://localhost:8000/webhook/credits \
+  -H "X-Webhook-Signature: $SIGNATURE" \
+  -H "Content-Type: application/json" \
+  -d "$PAYLOAD"
+```
 
 ---
 
@@ -137,7 +244,7 @@ Server-rendered HTML panel at `/panel` with:
 
 1. User enters email at `/auth/login`
 2. Magic link sent via SMTP (or printed to console in dev mode)
-3. Click link → session cookie → redirected to `/panel`
+3. Click link -> session cookie -> redirected to `/panel`
 
 ---
 
@@ -181,7 +288,7 @@ Top-level keys apply to all items. Each item can override them.
 
 ```bash
 python generate.py content/week-posts.json
-# -> 9 images (3 templates × 3 sizes)
+# -> 9 images (3 templates x 3 sizes)
 ```
 
 ### Classic CLI
@@ -314,6 +421,20 @@ Create `templates/my-template.html`, use `--brand-*` tokens for colors/fonts, `-
 
 ---
 
+## Tech Stack
+
+| Component | Technology | Why |
+|-----------|-----------|-----|
+| **Rendering** | Playwright + Chromium | Pixel-perfect HTML/CSS rendering, full browser engine |
+| **API + Panel** | FastAPI | Async Python, Jinja2 built-in, auto-generated API docs |
+| **Database** | SQLite (dev) / PostgreSQL (prod) | Zero-config dev, production-ready with `DATABASE_URL` |
+| **Email** | SMTP (stdlib `smtplib`) | Works with AWS SES, Resend, Mailgun, SendGrid — zero deps |
+| **Auth** | Magic links + `itsdangerous` | No passwords, signed session cookies |
+| **Templates** | HTML + CSS custom properties | Standard web tech, full CSS support, Google Fonts |
+| **Container** | Docker + `docker-compose` | One command to run everything |
+
+---
+
 ## Configuration
 
 ### Environment variables
@@ -327,7 +448,9 @@ Create `templates/my-template.html`, use `--brand-*` tokens for colors/fonts, `-
 | `SMTP_USER` | No | SMTP username |
 | `SMTP_PASS` | No | SMTP password |
 | `EMAIL_FROM` | No | Sender email address |
-| `WEBHOOK_SECRET` | No | Shared secret for credit webhook |
+| `WEBHOOK_SECRET` | No | Bearer token for credit webhook |
+| `WEBHOOK_HMAC_SECRET` | No | HMAC-SHA256 secret for webhook signature verification |
+| `CREDIT_PRODUCTS` | No | JSON mapping of product slugs to credits (e.g. `{"100-credits": 100}`) |
 | `BASE_URL` | No | Public URL (default: `http://localhost:8000`) |
 
 If `SMTP_HOST` is not set, magic links are printed to the console (dev mode).
@@ -383,12 +506,44 @@ social-media-generator/
 │   └── claude-code-skill.md
 ├── content/
 │   └── example.json         # Example batch input
+├── tests/
+│   ├── conftest.py          # Shared fixtures (test DB, test client)
+│   ├── test_db.py           # Database layer tests
+│   ├── test_engine.py       # Engine module tests
+│   ├── test_mailer.py       # Email tests
+│   └── test_app.py          # API, panel, webhook tests
 └── data/                    # Runtime data (git-ignored)
     └── app.db               # SQLite (dev mode)
 ```
 
 ---
 
+## Tests
+
+96 tests covering database, engine, mailer, API, panel, and webhook.
+
+```bash
+# Run all tests
+pip install pytest httpx
+pytest
+
+# Run specific module
+pytest test_app.py -k "webhook" -v
+```
+
+---
+
+## Contributing
+
+Contributions are welcome. Some ways to help:
+
+- **Bug reports** — open an [issue](https://github.com/jurczykpawel/social-media-generator/issues)
+- **New templates** — create an HTML template following existing patterns
+- **New features** — fork, create a branch, submit a PR
+- **Documentation** — improvements, translations, examples
+
+---
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)
