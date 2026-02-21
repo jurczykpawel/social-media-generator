@@ -87,6 +87,13 @@ Open http://localhost:8000 — done.
 
 The default setup includes PostgreSQL. To use SQLite instead, remove the `db` service from `docker-compose.yml` and clear `DATABASE_URL` in `.env`.
 
+### Deploy to VPS
+
+One-command deploy scripts with Caddy reverse proxy, HTTPS, and Docker Compose:
+
+- **[Mikrus VPS](https://github.com/jurczykpawel/mikrus-toolbox/tree/main/apps/social-media-generator)** — deploy on [Mikrus](https://mikr.us/) (Polish low-cost VPS)
+- **[Any VPS](https://github.com/jurczykpawel/stackpilot/tree/main/apps/social-media-generator)** — deploy on any Ubuntu/Debian server (Hetzner, DigitalOcean, etc.)
+
 ### Local (dev)
 
 **Requirements:** Python 3.10+, pip
