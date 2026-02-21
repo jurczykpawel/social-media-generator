@@ -14,9 +14,10 @@
     <div class="card-label">API Token</div>
     <div class="card-value token-value" id="tokenValue">{{ user.api_token[:8] }}...{{ user.api_token[-4:] }}</div>
     <div class="card-actions">
-      <button onclick="copyToken()" class="btn-sm">Copy full token</button>
-      <form method="post" action="/panel/token/regenerate" style="display:inline">
-        <button type="submit" class="btn-sm btn-danger" onclick="return confirm('Regenerate token? The old one will stop working.')">Regenerate</button>
+      <button id="copyTokenBtn" class="btn-sm">Copy full token</button>
+      <form method="post" action="/panel/token/regenerate" style="display:inline" id="regenTokenForm">
+        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+        <button type="submit" class="btn-sm btn-danger">Regenerate</button>
       </form>
     </div>
   </div>
@@ -61,16 +62,8 @@
 </table>
 {% endif %}
 
-<input type="hidden" id="fullToken" value="{{ user.api_token }}">
+{% endblock %}
 
-<script>
-function copyToken() {
-  const token = document.getElementById('fullToken').value;
-  navigator.clipboard.writeText(token).then(() => {
-    const btn = event.target;
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy full token', 1500);
-  });
-}
-</script>
+{% block scripts %}
+<script src="/static/panel.js"></script>
 {% endblock %}

@@ -154,30 +154,6 @@
 </div>
 
 <script src="_base.js"></script>
-<script>
-  initTemplate(({ params, styles, brandName }) => {
-    document.getElementById('footerName').textContent = brandName;
-
-    const badge = params.get('badge');
-    const title = params.get('title');
-    const attr = params.get('attr');
-    const date = params.get('date');
-    const cta = params.get('cta');
-
-    if (badge) document.getElementById('badge').textContent = badge;
-    if (title) document.getElementById('title').textContent = title;
-    if (attr) document.getElementById('speaker').textContent = attr;
-    if (date) document.getElementById('date').textContent = date;
-    if (cta) document.getElementById('cta').textContent = cta;
-
-    if (!attr) document.getElementById('speaker').style.display = 'none';
-    if (!date) document.getElementById('date').style.display = 'none';
-    if (!cta) document.getElementById('cta').style.display = 'none';
-
-    autoSizeText(document.getElementById('title'), [
-      [30, 5.5], [60, 4.5], [100, 3.8], [Infinity, 3]
-    ], 0.35);
-  });
-</script>
+<script src="announcement.js"></script>
 </body>
 </html>

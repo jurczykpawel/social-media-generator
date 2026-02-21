@@ -97,7 +97,8 @@ CREATE TABLE IF NOT EXISTS users (
     credits     INTEGER NOT NULL DEFAULT 0,
     api_token   TEXT UNIQUE NOT NULL,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-    last_login  TEXT
+    last_login  TEXT,
+    session_version INTEGER NOT NULL DEFAULT 1
 );
 CREATE TABLE IF NOT EXISTS magic_links (
     token       TEXT PRIMARY KEY,
@@ -121,7 +122,8 @@ CREATE TABLE IF NOT EXISTS users (
     credits     INTEGER NOT NULL DEFAULT 0,
     api_token   TEXT UNIQUE NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    last_login  TIMESTAMPTZ
+    last_login  TIMESTAMPTZ,
+    session_version INTEGER NOT NULL DEFAULT 1
 );
 CREATE TABLE IF NOT EXISTS magic_links (
     token       TEXT PRIMARY KEY,
@@ -149,6 +151,12 @@ def init_db():
     else:
         conn.executescript(_SCHEMA_SQLITE)
     conn.commit()
+    # Migration: add session_version column if missing (existing databases)
+    try:
+        _execute(conn, _q("ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 1"))
+        conn.commit()
+    except Exception:
+        conn.rollback()
     conn.close()
 
 
@@ -209,6 +217,14 @@ def update_last_login(user_id: str):
     conn.close()
 
 
+def increment_session_version(user_id: str):
+    """Increment session version to invalidate all existing session cookies."""
+    conn = _get_conn()
+    _execute(conn, _q("UPDATE users SET session_version = session_version + 1 WHERE id = %s"), (user_id,))
+    conn.commit()
+    conn.close()
+
+
 # --- Credits ---
 
 def add_credits(user_id: str, amount: int, reason: str):
@@ -263,27 +279,71 @@ def create_magic_link(email: str) -> str:
 
 
 def verify_magic_link(token: str) -> str | None:
-    """Verify and consume magic link. Returns email or None."""
+    """Verify and consume magic link atomically. Returns email or None."""
     conn = _get_conn()
+    # Atomic: UPDATE with used=0 condition prevents race conditions (TOCTOU)
+    now = datetime.now(timezone.utc).isoformat()
+    if _is_postgres():
+        rc = _execute(conn, _q(
+            "UPDATE magic_links SET used = 1 WHERE token = %s AND used = 0 AND expires_at > %s"
+        ), (token, now))
+    else:
+        rc = _execute(conn, _q(
+            "UPDATE magic_links SET used = 1 WHERE token = %s AND used = 0 AND expires_at > %s"
+        ), (token, now))
+
+    if rc == 0:
+        conn.rollback()
+        conn.close()
+        return None
+
     row = _fetchone(conn, _q(
-        "SELECT * FROM magic_links WHERE token = %s AND used = 0"
+        "SELECT email FROM magic_links WHERE token = %s"
     ), (token,))
-
-    if not row:
-        conn.close()
-        return None
-
-    expires = datetime.fromisoformat(str(row['expires_at']))
-    if expires.tzinfo is None:
-        expires = expires.replace(tzinfo=timezone.utc)
-    if datetime.now(timezone.utc) > expires:
-        conn.close()
-        return None
-
-    _execute(conn, _q("UPDATE magic_links SET used = 1 WHERE token = %s"), (token,))
     conn.commit()
     conn.close()
-    return row['email']
+    return row['email'] if row else None
+
+
+def reference_exists(user_id: str, reference: str) -> bool:
+    """Check if a credit log entry with this reference already exists (replay protection)."""
+    conn = _get_conn()
+    row = _fetchone(conn, _q(
+        "SELECT 1 FROM credit_log WHERE user_id = %s AND reason = %s"
+    ), (user_id, reference))
+    conn.close()
+    return row is not None
+
+
+def add_credits_atomic(user_id: str, amount: int, reference: str) -> bool:
+    """Add credits with replay protection in a single transaction.
+
+    Returns True if credits were added, False if reference was already processed.
+    Uses advisory lock on PostgreSQL to prevent race conditions.
+    """
+    conn = _get_conn()
+    try:
+        # PostgreSQL: advisory lock serializes concurrent webhook calls for same reference
+        if _is_postgres():
+            _execute(conn, "SELECT pg_advisory_xact_lock(hashtext(%s))", (f"{user_id}:{reference}",))
+
+        # Check if already processed (within same transaction)
+        row = _fetchone(conn, _q(
+            "SELECT 1 FROM credit_log WHERE user_id = %s AND reason = %s"
+        ), (user_id, reference))
+        if row:
+            conn.rollback()
+            return False
+
+        # Add credits + log atomically
+        _execute(conn, _q("UPDATE users SET credits = credits + %s WHERE id = %s"), (amount, user_id))
+        _execute(conn, _q(
+            "INSERT INTO credit_log (user_id, delta, reason) VALUES (%s, %s, %s)"
+        ), (user_id, amount, reference))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
 
 
 def cleanup_expired_links():

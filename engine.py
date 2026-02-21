@@ -34,7 +34,10 @@ def parse_size(size_str: str) -> list:
         return [(size_str, w, h)]
     if 'x' in size_str:
         parts = size_str.split('x')
-        return [('custom', int(parts[0]), int(parts[1]))]
+        w, h = int(parts[0]), int(parts[1])
+        if not (1 <= w <= 4096 and 1 <= h <= 4096):
+            raise ValueError("Custom size must be between 1x1 and 4096x4096")
+        return [('custom', w, h)]
     raise ValueError(f"Unknown size '{size_str}'. Use: {', '.join(SIZES.keys())}, all, or WxH")
 
 
@@ -44,7 +47,7 @@ def validate_brand(brand: str, brands_dir: Path) -> Path:
     if not path.exists():
         available = sorted(f.stem for f in brands_dir.glob('*.css') if not f.stem.startswith('_'))
         raise FileNotFoundError(
-            f"Brand '{brand}' not found in {brands_dir}/. "
+            f"Brand '{brand}' not found. "
             f"Available: {', '.join(available) if available else 'none'}"
         )
     return path
@@ -81,6 +84,26 @@ def build_url(template_path: Path, brand: str, brands_dir: Path, params: dict) -
     return f'file://{template_path}?{query}'
 
 
+_ALLOWED_NETWORK_HOSTS = {'fonts.googleapis.com', 'fonts.gstatic.com'}
+
+
+def _route_filter(route):
+    """Block outbound network requests except file:// and Google Fonts (SSRF prevention)."""
+    url = route.request.url
+    if url.startswith('file://'):
+        route.continue_()
+        return
+    try:
+        from urllib.parse import urlparse
+        host = urlparse(url).hostname or ''
+        if host in _ALLOWED_NETWORK_HOSTS:
+            route.continue_()
+            return
+    except Exception:
+        pass
+    route.abort()
+
+
 def render_image(
     brand_css_path: Path,
     template: str,
@@ -99,15 +122,18 @@ def render_image(
 
     if page is not None:
         page.set_viewport_size({'width': width, 'height': height})
-        page.goto(url, wait_until='networkidle')
+        page.goto(url, wait_until='networkidle', timeout=15000)
         page.wait_for_timeout(2000)
         return page.screenshot(type='png')
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
         pg = browser.new_page()
+        # Block outbound network requests (SSRF prevention) —
+        # only allow file:// and Google Fonts needed by brand CSS
+        pg.route("**/*", _route_filter)
         pg.set_viewport_size({'width': width, 'height': height})
-        pg.goto(url, wait_until='networkidle')
+        pg.goto(url, wait_until='networkidle', timeout=15000)
         pg.wait_for_timeout(2000)
         png_bytes = pg.screenshot(type='png')
         browser.close()

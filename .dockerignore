@@ -6,3 +6,6 @@ output/
 .env
 .git/
 .DS_Store
+test_*.py
+conftest.py
+.pytest_cache/

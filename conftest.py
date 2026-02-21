@@ -12,7 +12,7 @@ os.environ['SECRET_KEY'] = 'test-secret-key'
 os.environ['BASE_URL'] = 'http://localhost:8000'
 os.environ['SMTP_HOST'] = ''
 os.environ['WEBHOOK_SECRET'] = 'test-webhook-secret'
-os.environ['WEBHOOK_HMAC_SECRET'] = 'test-hmac-secret'
+os.environ['WEBHOOK_HMAC_SECRET'] = ''
 os.environ['CREDIT_PRODUCTS'] = '{"100-credits": 100, "500-credits": 500}'
 
 
@@ -63,13 +63,15 @@ def authed_client(test_client, tmp_db):
 
 @pytest.fixture
 def session_client(test_client, tmp_db):
-    """Test client with an active session cookie. Returns (client, user)."""
+    """Test client with an active session cookie. Returns (client, user, csrf_token)."""
     user = tmp_db.create_user('session@example.com', credits=100)
     from itsdangerous import URLSafeTimedSerializer
     signer = URLSafeTimedSerializer('test-secret-key')
-    token = signer.dumps(user['id'])
+    version = user.get('session_version', 1)
+    token = signer.dumps(f"{user['id']}:{version}")
     test_client.cookies.set('session', token)
-    return test_client, user
+    csrf_token = signer.dumps(f"csrf:{user['id']}")
+    return test_client, user, csrf_token
 
 
 @pytest.fixture

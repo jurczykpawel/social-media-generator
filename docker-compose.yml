@@ -13,6 +13,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   db:
@@ -20,7 +25,7 @@ services:
     environment:
       POSTGRES_DB: smg
       POSTGRES_USER: smg
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smg-dev-password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:

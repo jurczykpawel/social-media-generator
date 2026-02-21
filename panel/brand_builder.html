@@ -6,6 +6,7 @@
 <p>Pick colors and fonts, preview live, save as brand CSS.</p>
 
 <form method="post" action="/panel/brands/builder" id="builderForm">
+  <input type="hidden" name="_csrf" value="{{ csrf_token }}">
   <div class="builder-grid">
     <div class="builder-form">
       <fieldset>
@@ -24,8 +25,8 @@
       <fieldset>
         <legend>Theme</legend>
         <div class="radio-row">
-          <label><input type="radio" name="theme" value="dark" checked onchange="applyDefaults()"> Dark</label>
-          <label><input type="radio" name="theme" value="light" onchange="applyDefaults()"> Light</label>
+          <label><input type="radio" name="theme" value="dark" checked> Dark</label>
+          <label><input type="radio" name="theme" value="light"> Light</label>
         </div>
       </fieldset>
 

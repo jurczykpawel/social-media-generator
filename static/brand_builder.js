@@ -79,6 +79,11 @@ function loadFont(name) {
   document.head.appendChild(link);
 }
 
+// Theme radio buttons trigger applyDefaults (replaces inline onchange)
+form.querySelectorAll('input[name="theme"]').forEach(el => {
+  el.addEventListener('change', applyDefaults);
+});
+
 // Attach listeners to all inputs
 form.querySelectorAll('input, select').forEach(el => {
   el.addEventListener('input', updatePreview);

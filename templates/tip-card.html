@@ -172,39 +172,6 @@
 </div>
 
 <script src="_base.js"></script>
-<script>
-  initTemplate(({ params, styles, brandName }) => {
-    document.getElementById('footerName').textContent = brandName;
-
-    const badge = params.get('badge');
-    const title = params.get('title');
-    const bullets = params.get('bullets');
-    const num = params.get('num');
-
-    if (badge) document.getElementById('badge').textContent = badge;
-    if (title) document.getElementById('title').textContent = title;
-    if (num) document.getElementById('seriesNum').textContent = '#' + num;
-
-    if (bullets) {
-      const list = document.getElementById('bullets');
-      list.innerHTML = '';
-      bullets.split('|').forEach(text => {
-        const li = document.createElement('li');
-        li.className = 'bullet';
-        li.innerHTML = '<div class="bullet-icon"></div><span class="bullet-text"></span>';
-        li.querySelector('.bullet-text').textContent = text.trim();
-        list.appendChild(li);
-      });
-    }
-
-    autoSizeText(document.getElementById('title'), [
-      [30, 5], [60, 4.2], [100, 3.5], [Infinity, 2.8]
-    ]);
-
-    const vw = window.innerWidth / 100;
-    const bulletSize = Math.max(2 * vw, 16);
-    document.querySelectorAll('.bullet-text').forEach(b => b.style.fontSize = bulletSize + 'px');
-  });
-</script>
+<script src="tip-card.js"></script>
 </body>
 </html>

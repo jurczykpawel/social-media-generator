@@ -3,9 +3,10 @@
 > **One text, multiple formats.** Brand-consistent social media graphics from HTML templates — pixel-perfect Instagram posts, Stories, and YouTube thumbnails from a single command.
 
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![Docker](https://img.shields.io/badge/Docker-ready-blue)
-![Tests](https://img.shields.io/badge/Tests-96_passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-97_passed-brightgreen)
+![CI](https://github.com/jurczykpawel/social-media-generator/actions/workflows/tests.yml/badge.svg)
 
 ---
 
@@ -506,12 +507,11 @@ social-media-generator/
 │   └── claude-code-skill.md
 ├── content/
 │   └── example.json         # Example batch input
-├── tests/
-│   ├── conftest.py          # Shared fixtures (test DB, test client)
-│   ├── test_db.py           # Database layer tests
-│   ├── test_engine.py       # Engine module tests
-│   ├── test_mailer.py       # Email tests
-│   └── test_app.py          # API, panel, webhook tests
+├── conftest.py              # Shared test fixtures (test DB, test client)
+├── test_db.py               # Database layer tests
+├── test_engine.py           # Engine module tests
+├── test_mailer.py           # Email tests
+├── test_app.py              # API, panel, webhook tests
 └── data/                    # Runtime data (git-ignored)
     └── app.db               # SQLite (dev mode)
 ```
@@ -520,7 +520,7 @@ social-media-generator/
 
 ## Tests
 
-96 tests covering database, engine, mailer, API, panel, and webhook.
+106 tests covering database, engine, mailer, API, panel, webhook, and security.
 
 ```bash
 # Run all tests

@@ -14,9 +14,14 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN python -m playwright install chromium
 
-COPY . .
+# Create non-root user
+RUN useradd -m -s /bin/bash appuser
 
-RUN mkdir -p /app/data/user_brands
+COPY --chown=appuser:appuser . .
+
+RUN mkdir -p /app/data/user_brands && chown -R appuser:appuser /app/data
+
+USER appuser
 
 EXPOSE 8000
 

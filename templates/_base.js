@@ -15,8 +15,15 @@ function initTemplate(callback) {
 
   // Load brand CSS
   const brand = params.get('brand') || 'example';
-  const brandsDir = params.get('brands_dir') ||
+  let brandsDir = params.get('brands_dir') ||
     window.location.pathname.replace(/\/templates\/.*$/, '') + '/brands';
+  // Only allow safe relative paths (block arbitrary URLs, protocol-relative URLs, and path traversal)
+  if (window.location.protocol !== 'file:') {
+    if (brandsDir.indexOf('://') !== -1 || brandsDir.indexOf('..') !== -1 ||
+        brandsDir.indexOf('//') === 0) {
+      brandsDir = '/preview/brands';
+    }
+  }
   const cssLink = document.getElementById('brand-css');
   cssLink.href = brandsDir + '/' + brand + '.css';
 

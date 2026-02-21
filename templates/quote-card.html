@@ -179,25 +179,6 @@
 </div>
 
 <script src="_base.js"></script>
-<script>
-  initTemplate(({ params, styles, brandName }) => {
-    const brandTagline = styles.getPropertyValue('--brand-tagline').trim().replace(/"/g, '');
-
-    document.getElementById('footerName').textContent = brandName;
-    document.getElementById('tagline').textContent = brandTagline;
-
-    const text = params.get('text');
-    const attr = params.get('attr');
-    const num = params.get('num');
-
-    if (text) document.getElementById('quoteText').textContent = text;
-    if (attr) document.getElementById('attrText').textContent = '— ' + attr;
-    if (num) document.getElementById('seriesNum').textContent = '#' + num;
-
-    autoSizeText(document.getElementById('quoteText'), [
-      [40, 5.5], [80, 4.8], [120, 4.2], [180, 3.6], [250, 3.0], [Infinity, 2.6]
-    ], 0.5);
-  });
-</script>
+<script src="quote-card.js"></script>
 </body>
 </html>
