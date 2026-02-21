@@ -184,7 +184,7 @@ Universal webhook for adding credits after purchase. Works with any payment prov
 {"email": "user@example.com", "product": "100-credits", "reference": "order_456"}
 ```
 
-**GateFlow / nested format:**
+**[GateFlow](https://gateflow.cytr.us/) / nested format** (open-source checkout with 0% commission):
 ```json
 {
   "event": "purchase.completed",
@@ -340,6 +340,8 @@ All templates support optional background image: `bg` (path) + `bg_opacity` (0-1
 | `youtube` | 1280x720 | YouTube thumbnail |
 | `all` | all above | Generates 3 files from one command |
 | `WxH` | custom | e.g. `1200x628` for Open Graph |
+
+Custom sizes support any resolution up to 4096x4096. Templates use relative units (`vw`/`vh`) so text and layout scale automatically. However, they are optimized for the three preset aspect ratios (1:1, 9:16, 16:9). Custom sizes that match these ratios (e.g. `2160x2160`) will look correct. Non-standard aspect ratios (e.g. `300x1000`) may produce awkward layouts — test before using in production.
 
 ---
 
