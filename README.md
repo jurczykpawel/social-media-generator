@@ -91,7 +91,7 @@ The default setup includes PostgreSQL. To use SQLite instead, remove the `db` se
 
 One-command deploy scripts with Caddy reverse proxy, HTTPS, and Docker Compose:
 
-- **[Mikrus VPS](https://github.com/jurczykpawel/mikrus-toolbox/tree/main/apps/social-media-generator)** — deploy on [Mikrus](https://mikr.us/) (Polish low-cost VPS)
+- **[Mikrus VPS](https://github.com/jurczykpawel/mikrus-toolbox/tree/main/apps/social-media-generator)** — deploy on [Mikrus](https://mikr.us/?r=pavvel) (Polish low-cost VPS, 1 month free with this link)
 - **[Any VPS](https://github.com/jurczykpawel/stackpilot/tree/main/apps/social-media-generator)** — deploy on any Ubuntu/Debian server (Hetzner, DigitalOcean, etc.)
 
 ### Local (dev)
